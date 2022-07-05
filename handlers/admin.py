@@ -2,8 +2,9 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import Text
-
 from create_bot import dp, bot
+from data_base.sqlite_db import sql_add_command
+from keyboards import admin_kb
 
 ID = None
 
@@ -17,7 +18,7 @@ class FSMAdmin(StatesGroup):
 async def make_chenges_command(message: types.Message):
     global ID
     ID = message.from_user.id
-    await bot.send_message(message.from_user.id, "Что хозяин надо?")   #, reply_markup_button_case_admin
+    await bot.send_message(message.from_user.id, "Что хозяин надо?", reply_markup=admin_kb.button_case_admin)
     await message.delete()
 
 #Начало диалога загрузки нового пункта меню
@@ -60,9 +61,9 @@ async def load_price(message: types.Message, state=FSMContext):
     if message.from_user.id == ID:
         async with state.proxy() as data:
             data['price'] = float(message.text)
-
-        async with state.proxy() as data:
-            await message.reply(str(data))
+        await sql_add_command(state)
+        # async with state.proxy() as data:
+        #     await message.reply(str(data))
         await state.finish()
 
 #Выход из состояний
