@@ -3,8 +3,9 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import Text
 from create_bot import dp, bot
-from data_base.sqlite_db import sql_add_command
+from data_base.sqlite_db import sql_add_command, sql_read2, sql_delete_command
 from keyboards import admin_kb
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 ID = None
 
@@ -55,7 +56,7 @@ async def load_description(message: types.Message, state=FSMContext):
         await FSMAdmin.next()
         await message.reply('Теперь укажи цену')
 
-#Ловим третий ответ
+#Ловим последний ответ
 # @dp.message_handler(state=FSMAdmin.price)
 async def load_price(message: types.Message, state=FSMContext):
     if message.from_user.id == ID:
@@ -77,6 +78,23 @@ async def cancel_handler(message: types.Message, state=FSMContext):
         await state.finish()
         await message.reply('Ок')
 
+@dp.callback_query_handler(lambda x: x.data and x.data.startswith('del '))
+async def del_callback_run(callback_query: types.CallbackQuery):
+    await sql_delete_command(callback_query.data.replace('del ', ''))
+    await callback_query.answer(text=f'{callback_query.data.replace("del ", "")} удалена.', show_alert=True)
+
+
+@dp.message_handler(commands='Удалить')
+async def del_item(message: types.Message):
+    if message.from_user.id == ID:
+        read = await sql_read2()
+        for ret in read:
+            await bot.send_photo(message.from_user.id, ret[0], f'{ret[1]}\nОписание: {ret[2]}\nЦена {ret[-1]}')
+            await bot.send_message(message.from_user.id, text='^^^', reply_markup=InlineKeyboardMarkup().\
+                                   add(InlineKeyboardButton(f'Удалить {ret[1]}', callback_data=f'del {ret[1]}')))
+
+
+
 def register_handlers_admin(dp : Dispatcher):
     dp.register_message_handler(cm_start, commands='Загрузить', state=None)
     dp.register_message_handler(load_photo, content_types=['photo'], state=FSMAdmin.photo)
@@ -87,5 +105,6 @@ def register_handlers_admin(dp : Dispatcher):
     dp.register_message_handler(cancel_handler, state="*", commands='отмена')
     dp.register_message_handler(cancel_handler, Text(equals='отмена', ignore_case=True), state="*")
     dp.register_message_handler(make_chenges_command, commands=['moderator'], is_chat_admin=True)
-
+    # dp.register_message_handler(del_callback_run, lambda x: x.data and x.data.startswith('del '))
+    # dp.register_message_handler(del_item, commands='Удалить')
 

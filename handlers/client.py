@@ -21,7 +21,7 @@ async def pizza_open_command(message: types.Message):
 async def pizza_place_command(message: types.Message):
     await bot.send_message(message.from_user.id, 'ул. Колбасная 11') #reply_markup=ReplyKeyboardRemove() выход из системы
 
-@dp.message_handler(commands=['Меню'])
+# @dp.message_handler(commands=['Меню'])
 async def pizza_menu_command(message: types.Message):
     await sql_read(message)
 
