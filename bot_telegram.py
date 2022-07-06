@@ -8,8 +8,9 @@ async def on_startup(_):
 
 from handlers import client, admin, other
 
-client.register_handlers_client(dp)
+
 admin.register_handlers_admin(dp)
+client.register_handlers_client(dp)
 other.register_hadlers_other(dp)
 
 
